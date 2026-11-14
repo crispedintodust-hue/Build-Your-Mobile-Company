@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#59b8ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mobile Co">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>[hidden]{display:none!important}html{-webkit-text-size-adjust:100%}body{margin:0}</style>
+<title>Build Your Mobile Company</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Lilita+One&display=swap">
+<style>
+/* Layout: phone-first game shell. Sticky company bar on top, one scrolling panel, fixed tab bar at the bottom. Dark workshop look chosen on purpose. */
+:root{
+  --bg:#0d1117; --panel:#161c25; --panel2:#1d2531; --line:#2a3342;
+  --fg:#e9eef5; --mute:#8c98aa; --accent:#58a6ff; --money:#ffc857;
+  --good:#3fb97f; --bad:#f0616d; --warn:#f0a050;
+  --display:'Space Grotesk','Segoe UI',system-ui,sans-serif;
+  --body:'Inter','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 84px;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:20px}h3{font-size:15px}
+button{font:inherit;color:inherit;cursor:pointer}
+input[type=text]{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)}
+.small{font-size:12px}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);font-weight:600}
+
+/* top bar */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.bar .name{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .who{display:flex;gap:10px;align-items:center;min-width:0;flex:1}
+.bar .stats{text-align:right;flex:none}
+.cash{font-family:var(--display);font-weight:700;color:var(--money);font-size:18px}
+.day{font-size:11px;color:var(--mute)}
+.ticker{font-size:12px;color:var(--mute);padding:6px 0;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ticker b{color:var(--warn);font-weight:600}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);
+  padding:6px max(6px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+.tab{background:none;border:0;border-radius:10px;padding:6px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mute);font-size:11px;font-weight:500;min-width:0}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected=true]{color:var(--accent);background:var(--panel2)}
+.dot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--bad);margin:-2px 0 0 14px}
+
+/* panels */
+.panel{display:none;padding-top:16px;flex-direction:column;gap:14px}
+.panel.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;min-width:0}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{background:var(--accent);color:#06101f;border:0;border-radius:10px;padding:11px 14px;font-weight:600;font-family:var(--display)}
+.btn:disabled{background:var(--panel2);color:var(--mute);cursor:not-allowed}
+.btn.ghost{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
+.btn.big{width:100%;padding:14px;font-size:16px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chip{flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px}
+.chip[aria-pressed=true]{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);padding:0}
+.sw[aria-pressed=true]{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.shapes{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px}
+.pick{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;align-items:center;justify-content:center}
+.pick[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pick svg{width:40px;height:40px}
+
+/* phone designer */
+.stage{display:flex;gap:14px;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1f2a3a,var(--panel) 70%);border-radius:14px;padding:16px;border:1px solid var(--line)}
+.stage svg{width:78px;height:auto;flex:none}
+#barLogo svg{width:36px;height:36px;display:block}
+.statlist{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.meter{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.stars{color:var(--money);letter-spacing:2px;font-size:16px}
+.part{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.part[aria-pressed=true]{border-color:var(--accent);background:#14253b}
+.part.lock{opacity:.45}
+.part .t{flex:none;width:26px;height:26px;border-radius:7px;background:var(--bg);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:13px;color:var(--accent)}
+.part .nm{font-weight:600;font-size:13px}
+.part .pr{margin-left:auto;font-size:12px;color:var(--money);flex:none}
+.stack{display:flex;flex-direction:column;gap:8px}
+
+/* research tree */
+.chain{display:flex;flex-direction:column;position:relative;gap:0}
+.node{display:flex;gap:12px;align-items:stretch}
+.rail{width:26px;display:flex;flex-direction:column;align-items:center;flex:none}
+.rail .b{width:22px;height:22px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;font-weight:700}
+.rail .l{flex:1;width:2px;background:var(--line);min-height:12px}
+.node.done .b{background:var(--good);border-color:var(--good);color:#04140b}
+.node.done .l{background:var(--good)}
+.node.going .b{border-color:var(--accent);color:var(--accent)}
+.node .body{flex:1;min-width:0;padding-bottom:12px}
+.node .box{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.node.avail .box{border-color:var(--accent)}
+.node.far .box{opacity:.5}
+.prog{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--accent)}
+
+/* sales */
+.phonecard{display:flex;flex-direction:column;gap:10px}
+.sold{height:10px;background:var(--panel2);border-radius:6px;overflow:hidden;display:flex}
+.sold i{display:block;height:100%;background:var(--good);transition:width .4s}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.nums b{display:block;font-family:var(--display);font-size:18px}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--mute)}
+.tag.live{color:var(--good);border-color:var(--good)}
+.tag.end{color:var(--mute)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+
+/* tables */
+.lb{display:flex;flex-direction:column}
+.lbrow{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);min-width:0}
+.lbrow:last-child{border-bottom:0}
+.lbrow.me{background:linear-gradient(90deg,#14253b,transparent);margin:0 -14px;padding-left:14px;padding-right:14px}
+.rank{width:22px;font-family:var(--display);font-weight:700;color:var(--mute);text-align:center;flex:none}
+.lbrow svg{width:34px;height:34px;flex:none}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv div{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.kv b{display:block;font-family:var(--display);font-size:18px}
+
+/* update log */
+.ver{display:flex;flex-direction:column;gap:6px}
+.ver ul{margin:0;padding-left:18px;color:var(--fg)}
+.ver li{margin:2px 0}
+.badge{font-family:var(--display);font-weight:700;background:var(--accent);color:#06101f;border-radius:6px;padding:2px 8px;font-size:13px}
+.ach{display:flex;gap:10px;align-items:center}
+.ach .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--panel2);flex:none}
+.ach.got .ic{background:var(--money);color:#241a00}
+.ach:not(.got){opacity:.55}
+
+/* toast */
+#toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:#fff;color:#0d1117;padding:10px 16px;border-radius:999px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:40;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* setup + ceremony overlays */
+.overlay{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.overlay[hidden],#show[hidden]{display:none!important}
+.setup{max-width:480px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.logoview{display:grid;place-items:center;padding:14px}
+.logoview svg{width:110px;height:110px}
+
+#show{display:grid;place-items:center;background:#05070b;overflow:hidden;text-align:center}
+#show canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.beam{position:absolute;top:-10%;left:50%;width:140%;height:130%;transform-origin:50% 0;
+  background:conic-gradient(from 160deg at 50% 0,transparent 0 10deg,rgba(255,255,255,.16) 15deg 25deg,transparent 30deg 360deg);
+  animation:sweep 3.2s ease-in-out infinite alternate;translate:-50% 0}
+@keyframes sweep{from{rotate:-18deg}to{rotate:18deg}}
+.count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:120px;color:#fff;animation:pop 1s ease-out both}
+@keyframes pop{0%{transform:scale(2.2);opacity:0}30%{opacity:1}100%{transform:scale(.8);opacity:0}}
+.reveal{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;opacity:0;animation:rise 1.1s cubic-bezier(.2,.9,.2,1) both}
+@keyframes rise{from{transform:translateY(140px) scale(.7);opacity:0}to{transform:none;opacity:1}}
+.reveal svg.ph{width:170px;filter:drop-shadow(0 0 30px rgba(120,180,255,.55));animation:float 3s ease-in-out infinite 1.1s}
+@keyframes float{50%{transform:translateY(-8px)}}
+.reveal h1{font-size:30px;color:#fff}
+.reveal .by{display:flex;gap:8px;align-items:center;color:var(--mute)}
+.reveal .by svg{width:26px;height:26px}
+.launchword{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.4em;color:var(--money);opacity:0;animation:fade .6s .5s both}
+@keyframes fade{to{opacity:1}}
+.showbtn{opacity:0;animation:fade .6s 1.8s both}
+@media (prefers-reduced-motion:reduce){.beam,.reveal svg.ph{animation:none}.count{animation-duration:.3s}}
+
+/* ===== flat cartoon look: outlines, solid colors, hard shadows ===== */
+:root{
+  --ink:#18204a; --bg:#59b8ff; --panel:#ffffff; --panel2:#e9f3ff; --line:#18204a;
+  --fg:#18204a; --mute:#56618f; --accent:#ffcf33; --hot:#ff5a5f; --money:#d98200;
+  --good:#2fc46b; --bad:#ff5a5f; --warn:#e07a10;
+  --display:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito','Trebuchet MS',system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{background:var(--bg);color:var(--ink)}
+body{background:var(--bg);font-weight:600;font-size:15px}
+body::before{background:var(--bg)}
+.cash,.kv b,.nums b,.rank,.badge,.part .t,.count,.launchword,.reveal h1,.btn,.bar .name,h1,h2,h3{font-weight:400}
+.bar{margin-top:10px;margin-bottom:8px;padding:8px 12px;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);top:calc(env(safe-area-inset-top,0px) + 8px)}
+.bar .name{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink);font-size:19px}
+.cash{color:var(--money);text-shadow:none;font-size:22px}
+.day{color:var(--mute);font-weight:700}
+.ticker{background:#fff;border:2.5px solid var(--ink);border-radius:12px;color:var(--ink);padding:7px 12px;margin-bottom:2px}
+.ticker b{color:var(--hot)}
+.label{color:var(--mute);font-weight:800}
+.mute{color:var(--mute)}
+h2{font-size:26px}h3{font-size:19px}
+.card{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 5px 0 var(--ink)}
+.btn{background:var(--accent);color:var(--ink);border:3px solid var(--ink);border-radius:12px;padding:10px 16px;box-shadow:0 4px 0 var(--ink);text-shadow:none;font-size:16px;transition:none}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+.btn:disabled{background:#dfe5f5;color:#8590b8;border-color:#9aa5cc;box-shadow:0 4px 0 #9aa5cc}
+.btn.ghost{background:#fff;color:var(--ink);border:3px solid var(--ink);box-shadow:0 4px 0 var(--ink)}
+.btn.big{background:#3ddc7e;color:var(--ink);font-size:22px;padding:14px;border-radius:14px;box-shadow:0 5px 0 var(--ink)}
+.btn.big:active:not(:disabled){box-shadow:0 0 0 var(--ink)}
+.btn.big:disabled{background:#dfe5f5;color:#8590b8;box-shadow:0 5px 0 #9aa5cc}
+.chip{background:#fff;color:var(--ink);border:2.5px solid var(--ink);border-radius:999px;padding:7px 14px;font-weight:800;box-shadow:0 3px 0 var(--ink)}
+.chip[aria-pressed=true]{background:var(--accent);color:var(--ink);border-color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+.chips{padding-bottom:7px}
+.part{background:#fff;border:3px solid var(--ink);border-radius:12px;padding:10px 12px;box-shadow:0 3px 0 var(--ink)}
+.part[aria-pressed=true]{background:#fff0a8;box-shadow:0 3px 0 var(--ink)}
+.part.lock{background:#e4e9f7;opacity:1;border-color:#9aa5cc;box-shadow:0 3px 0 #9aa5cc;color:#7a85ad}
+.part .t{background:var(--ink);color:#fff;border-radius:8px;width:30px;height:30px;font-size:15px}
+.part.lock .t{background:#9aa5cc}
+.part .nm{font-weight:800}
+.part .pr{color:var(--money);font-weight:800}
+.part.lock .pr{color:#7a85ad}
+.meter,.prog,.sold{background:#dfe7fb;border:2.5px solid var(--ink);border-radius:8px}
+.meter{height:15px}.meter i{background:var(--good);border-radius:0}
+.prog{height:13px}.prog i{background:var(--accent)}
+.sold{height:18px}.sold i{background:var(--good)}
+.stars{color:#ffb400;text-shadow:none;}
+.tag{background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:800}
+.tag.live{background:#c9f7dc;color:var(--ink);border-color:var(--ink)}
+.tag.end{background:#e4e9f7}
+.kv div{background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.kv b{font-size:21px}
+input[type=text]{background:#fff;border:3px solid var(--ink);border-radius:10px;font-size:16px;font-weight:700;color:var(--ink)}
+input[type=text]:focus{outline:0;box-shadow:0 0 0 3px var(--accent)}
+input[type=range]{accent-color:var(--hot)}
+:focus-visible{outline:3px solid var(--hot);outline-offset:2px}
+.tabs{background:#fff;border-top:3px solid var(--ink);backdrop-filter:none}
+.tab{color:var(--mute);font-weight:800;border:2.5px solid transparent;border-radius:12px}
+.tab[aria-selected=true]{color:var(--ink);background:var(--accent);border-color:var(--ink);box-shadow:0 3px 0 var(--ink);filter:none}
+.tab[aria-selected=true] svg{filter:none}
+.node .box{background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.node.avail .box{background:#fff0a8;border-color:var(--ink);box-shadow:0 3px 0 var(--ink)}
+.node.far .box{opacity:1;background:#e4e9f7;border-color:#9aa5cc;box-shadow:0 3px 0 #9aa5cc;color:#7a85ad}
+.node.done .box{background:#d5f7e3}
+.rail .b{background:#fff;border:3px solid var(--ink);width:28px;height:28px;color:var(--ink)}
+.rail{width:32px}.rail .l{background:var(--ink);width:3px}
+.node.done .b{background:var(--good);border-color:var(--ink);box-shadow:none;color:var(--ink)}
+.node.done .l{background:var(--ink)}
+.node.going .b{background:var(--accent);color:var(--ink);border-color:var(--ink)}
+.lbrow{border-bottom:2.5px dashed #b7c3e8}
+.lbrow.me{background:#fff0a8}
+.rank{color:var(--ink);font-size:20px}
+.badge{background:var(--hot);color:#fff;border:2.5px solid var(--ink)}
+.ach .ic{background:#e4e9f7;border:2.5px solid var(--ink);color:var(--ink)}
+.ach.got .ic{background:var(--accent);box-shadow:none}
+.ach:not(.got){opacity:.6}
+.sw{border:3px solid var(--ink);width:34px;height:34px}
+.sw[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 3px #fff,0 0 0 6px var(--ink)}
+.pick{background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:0 3px 0 var(--ink)}
+.pick[aria-pressed=true]{background:#fff0a8;box-shadow:0 3px 0 var(--ink);border-color:var(--ink)}
+.logoview svg{filter:none}
+.overlay{background:var(--bg);color:var(--ink)}
+.overlay .mute{color:#0c2a5c}
+#toast{background:var(--ink);color:#fff;border:3px solid #fff;font-weight:800}
+
+/* stage: a flat shop display with a floor */
+.stage{position:relative;overflow:hidden;min-height:310px;flex-direction:column;gap:8px;padding:22px 12px 14px;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);
+  background:linear-gradient(#ffd45c 0 66%,#ff9a5c 66% 100%)}
+.stage::before,.stage::after{content:none}
+.phones{position:relative;z-index:1;display:flex;gap:18px;align-items:flex-end;justify-content:center}
+.phones svg{width:108px;height:auto;filter:none}
+.phones svg:first-child,.phones svg:last-child{transform:none}
+.phones svg:last-child{scale:.92}
+.floor{left:22%;right:22%;bottom:92px;height:12px;background:rgba(24,32,74,.28);filter:none;border-radius:50%}
+.stage .statlist{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px 12px;width:100%;box-shadow:0 3px 0 var(--ink)}
+.stage .stars{font-size:22px}
+.stage .meter{max-width:none}
+#show{background:var(--ink)}
+.beam{background:conic-gradient(from 160deg at 50% 0,transparent 0 10deg,rgba(255,207,51,.22) 15deg 25deg,transparent 30deg 360deg)}
+.count{color:var(--accent)}
+.reveal svg.ph{filter:none}
+.reveal .by{color:#cfd6ff}
+.launchword{color:var(--accent)}
+</style>
+
+<header class="bar">
+  <div class="who"><div id="barLogo"></div><div class="grow"><div class="name" id="barName">My Mobile Co</div><div class="day mono" id="barDay">Day 1</div></div></div>
+  <div class="stats"><div class="cash mono" id="barCash">$5,000</div><div class="day" id="barFans">0 fans</div></div>
+</header>
+<div class="ticker" id="ticker"><b>NEWS</b> Your garage workshop is open for business.</div>
+
+<main>
+  <section class="panel on" id="p-design"></section>
+  <section class="panel" id="p-research"></section>
+  <section class="panel" id="p-sales"></section>
+  <section class="panel" id="p-rivals"></section>
+  <section class="panel" id="p-stats"></section>
+  <section class="panel" id="p-log"></section>
+</main>
+
+<nav class="tabs" role="tablist" id="tabs"></nav>
+<div id="toast" role="status"></div>
+
+<div class="overlay" id="setup"></div>
+<div class="overlay" id="show" hidden></div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+const num=n=>Math.round(n).toLocaleString('en-US');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- parts: tier 1 (worst) to tier 8 (best) ---------- */
+const BASE=[6,10,16,26,40,64,100,160];            // unit cost by tier, scaled by category weight
+const RC=[0,150,350,800,1850,4200,9700,22000];      // research cost by tier
+const RT=[0,8,15,25,40,60,90,130];                // research seconds by tier
+const CATS=[
+ {id:'display',name:'Display',w:1.0,parts:['3.5" LCD 480p','4.5" LCD 720p','5.5" IPS HD','6.1" IPS Full HD','6.3" AMOLED Full HD+','6.5" AMOLED 90Hz','6.7" LTPO 120Hz','6.9" Dynamic LTPO 144Hz']},
+ {id:'chip',name:'Chip',w:1.0,parts:['Spark S1 dual-core 1.0GHz','Spark S2 quad-core 1.4GHz','Nova N3 hexa-core 1.8GHz','Nova N4 octa-core 2.0GHz','Nova N5 7nm 2.4GHz','Apex A6 5nm 2.8GHz','Apex A7 4nm 3.2GHz','Apex A8 AI 3nm 3.6GHz']},
+ {id:'camera',name:'Camera',w:.8,parts:['VGA 0.3MP','2MP fixed focus','5MP autofocus','8MP with flash','13MP dual tone flash','50MP wide','64MP with OIS','108MP triple lens']},
+ {id:'battery',name:'Battery',w:.5,parts:['1200 mAh','1800 mAh','2500 mAh','3000 mAh','3500 mAh','4000 mAh','4500 mAh','5000 mAh']},
+ {id:'body',name:'Body',w:.6,parts:['Thin plastic','Thick plastic','Polycarbonate','Aluminium','Glass back','Gorilla Glass','Titanium frame','Ceramic']},
+ {id:'memory',name:'Memory',w:.7,parts:['512MB RAM / 4GB','1GB RAM / 8GB','2GB RAM / 16GB','3GB RAM / 32GB','4GB RAM / 64GB','6GB RAM / 128GB','8GB RAM / 256GB','12GB RAM / 512GB']}
+];
+const FEATS=[
+ {id:'fp',name:'Fingerprint sensor',cost:8,bonus:.10,rc:250,rt:10},
+ {id:'face',name:'Face unlock',cost:12,bonus:.15,rc:700,rt:20},
+ {id:'fast',name:'Fast charging',cost:15,bonus:.20,rc:900,rt:25},
+ {id:'water',name:'Water resistance',cost:18,bonus:.20,rc:1200,rt:30},
+ {id:'wire',name:'Wireless charging',cost:20,bonus:.20,rc:2000,rt:40},
+ {id:'g5',name:'5G modem',cost:25,bonus:.30,rc:4000,rt:60},
+ {id:'fold',name:'Foldable screen',cost:90,bonus:.60,rc:12000,rt:100}
+];
+const STYLES=['Classic bezel','Notch','Punch-hole','Full screen'];
+const BODYCOL=['#2b2f3a','#e8e8ec','#3b6cff','#e0457b','#2fbf8f','#f2a93b','#8a5cf6','#c9b48a'];
+const LOGOCOL=['#58a6ff','#ff6b6b','#ffc857','#3fb97f','#a78bfa','#f472b6','#111827','#ffffff'];
+const partCost=(cat,t)=>Math.round(BASE[t-1]*cat.w*10)/10;
+
+/* ---------- logo ---------- */
+const SHAPES={
+ circle:f=>`<circle cx="50" cy="50" r="46" fill="${f}"/>`,
+ square:f=>`<rect x="6" y="6" width="88" height="88" rx="22" fill="${f}"/>`,
+ hex:f=>`<polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="${f}"/>`,
+ shield:f=>`<path d="M50 4 L90 18 V50 C90 75 70 90 50 97 C30 90 10 75 10 50 V18 Z" fill="${f}"/>`,
+ diamond:f=>`<polygon points="50,3 97,50 50,97 3,50" fill="${f}"/>`,
+ pill:f=>`<rect x="3" y="24" width="94" height="52" rx="26" fill="${f}"/>`
+};
+const G0='<g transform="translate(23 23) scale(.54)">',G1='</g>';
+const GLYPHS={
+ letter:(f,l)=>`<text x="50" y="69" font-size="62" text-anchor="middle" font-family="Space Grotesk,Arial,sans-serif" font-weight="700" fill="${f}">${esc(l)}</text>`,
+ bolt:f=>G0+`<path d="M58 4 L22 56 H46 L40 96 L78 42 H54 Z" fill="${f}"/>`+G1,
+ star:f=>G0+`<polygon points="50,6 62,38 95,40 69,61 78,94 50,75 22,94 31,61 5,40 38,38" fill="${f}"/>`+G1,
+ leaf:f=>G0+`<path d="M50 94 C16 72 10 34 50 6 C90 34 84 72 50 94 Z" fill="${f}"/>`+G1,
+ drop:f=>G0+`<path d="M50 6 C50 6 18 44 18 64 A32 32 0 0 0 82 64 C82 44 50 6 50 6 Z" fill="${f}"/>`+G1,
+ peak:f=>G0+`<path d="M4 86 L36 34 L54 62 L68 42 L96 86 Z" fill="${f}"/>`+G1,
+ crown:f=>G0+`<path d="M8 80 L14 26 L36 52 L50 18 L64 52 L86 26 L92 80 Z" fill="${f}"/>`+G1,
+ orbit:f=>G0+`<circle cx="50" cy="50" r="15" fill="${f}"/><ellipse cx="50" cy="50" rx="44" ry="18" fill="none" stroke="${f}" stroke-width="7" transform="rotate(-30 50 50)"/>`+G1,
+ wave:f=>G0+`<path d="M4 58 Q20 20 36 58 T68 58 T100 58" fill="none" stroke="${f}" stroke-width="12" stroke-linecap="round"/>`+G1
+};
+function logoSVG(lg,name){
+  const initial=(name||'M').trim().charAt(0).toUpperCase()||'M';
+  const ring=lg.ring?`<circle cx="50" cy="50" r="40" fill="none" stroke="${lg.fg}" stroke-opacity=".35" stroke-width="2"/>`:'';
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${SHAPES[lg.shape](lg.bg)}${ring}${GLYPHS[lg.glyph](lg.fg,initial)}</svg>`;
+}
+
+/* ---------- phone drawing (front and back) ---------- */
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;
+  const f=v=>Math.round(clamp(a<0?v*(1+a):v+(255-v)*a,0,255));return '#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+const WALL=[['#59627a','#2a3040'],['#4f6bd8','#1b2a78'],['#2fa8ff','#2a3fd0'],['#ff7a59','#c026d3'],['#ffb347','#e11d74'],['#22e3ff','#7c3aed'],['#34f5a5','#0ea5e9'],['#ffe45c','#ff3d81']];
+function screenGrad(t){return WALL[t-1]}
+function lensCount(t){return [1,1,1,2,2,3,3,4][t-1]}
+function phoneSVG(d,face,logo,cname,uid){
+  const col=d.color,INK='#18204a',id='g'+uid,g=screenGrad(d.t.display);
+  const bez=[13,9,6,4][d.style],rad=d.style===3?20:15;
+  const lum=(parseInt(col.slice(1,3),16)*.299+parseInt(col.slice(3,5),16)*.587+parseInt(col.slice(5,7),16)*.114);
+  const sx=bez-2,sy=bez+3,sw=96-(bez-2)*2,sh=204-(bez+3)*2+2,sr=d.style===3?13:9;
+  const frame=`<rect x="-2" y="48" width="3.5" height="16" rx="1.5" fill="${INK}"/><rect x="-2" y="70" width="3.5" height="16" rx="1.5" fill="${INK}"/><rect x="94.5" y="60" width="3.5" height="26" rx="1.5" fill="${INK}"/>
+  <rect x="1.5" y="1.5" width="93" height="213" rx="${rad}" fill="${col}" stroke="${INK}" stroke-width="3"/>`;
+  let inner='';
+  if(face==='front'){
+    const apps=['#ff5a5f','#ffcf33','#3ddc7e','#59b8ff','#b48cff','#ff9a5c','#18d1c4','#ff7ab8'].map((c,i)=>`<rect x="${20+(i%4)*15}" y="${148+Math.floor(i/4)*16}" width="11" height="11" rx="3.5" fill="${c}" stroke="${INK}" stroke-width="1.5"/>`).join('');
+    inner=`<defs><clipPath id="${id}c"><rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="${sr}"/></clipPath></defs>
+    <g clip-path="url(#${id}c)"><rect x="0" y="0" width="96" height="216" fill="${g[0]}"/>
+    <circle cx="68" cy="50" r="15" fill="#fff4b8"/>
+    <path d="M0 122 Q24 98 48 118 T96 108 V216 H0Z" fill="${g[1]}"/>
+    <text x="30" y="62" font-size="21" text-anchor="middle" font-family="Lilita One,Arial,sans-serif" fill="#fff" stroke="${INK}" stroke-width=".8" paint-order="stroke">9:41</text>
+    <text x="30" y="73" font-size="5.5" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-weight="800" fill="#fff">${esc(cname.slice(0,16))}</text>
+    ${apps}<rect x="14" y="188" width="68" height="14" rx="7" fill="#fff" fill-opacity=".55" stroke="${INK}" stroke-width="1.5"/></g>
+    <rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="${sr}" fill="none" stroke="${INK}" stroke-width="2"/>`;
+    if(d.style===1)inner+=`<rect x="33" y="${sy}" width="30" height="8" rx="4" fill="${INK}"/>`;
+    if(d.style===2)inner+=`<circle cx="48" cy="${bez+10}" r="3.8" fill="${INK}"/>`;
+    if(d.style===0)inner+=`<rect x="36" y="6" width="24" height="3.5" rx="1.7" fill="${INK}"/><circle cx="48" cy="210" r="3.5" fill="none" stroke="${INK}" stroke-width="1.2"/>`;
+  }else{
+    const n=lensCount(d.t.camera),ls=[],h=n*17+8;
+    for(let i=0;i<n;i++){const y=24+i*17;ls.push(`<circle cx="27" cy="${y}" r="7" fill="#fff" stroke="${INK}" stroke-width="2"/><circle cx="27" cy="${y}" r="3.4" fill="${INK}"/><circle cx="25.8" cy="${y-1.4}" r="1" fill="#fff"/>`)}
+    inner=`<rect x="12" y="12" width="30" height="${h}" rx="12" fill="${lum<120?'#fff':'#18204a'}" fill-opacity=".22" stroke="${INK}" stroke-width="2.5"/>${ls.join('')}
+    <circle cx="35" cy="${12+h-9}" r="2.6" fill="#ffcf33" stroke="${INK}" stroke-width="1.4"/>
+    <g transform="translate(30 92) scale(.36)" stroke="${INK}" stroke-width="5">${SHAPES[logo.shape]('#ffffff')}</g>
+    <text x="48" y="190" font-size="7" text-anchor="middle" font-family="Lilita One,Arial,sans-serif" fill="${lum<120?'#fff':INK}" letter-spacing="1">${esc(cname.toUpperCase().slice(0,14))}</text>`;
+  }
+  return `<svg viewBox="-3 0 102 216" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${face} of phone">${frame}${inner}</svg>`;
+}
+/* ---------- game state ---------- */
+const KEY='bymc_save_v2';
+const RIVALS=[
+ {n:'Pineberry',series:'Berry',val:90000,g:90,lg:{shape:'circle',glyph:'leaf',bg:'#ff6b6b',fg:'#ffffff',ring:false}},
+ {n:'Zentra',series:'Z',val:45000,g:45,lg:{shape:'hex',glyph:'bolt',bg:'#a78bfa',fg:'#111827',ring:true}},
+ {n:'Orbit Mobile',series:'Orb',val:25000,g:25,lg:{shape:'square',glyph:'orbit',bg:'#111827',fg:'#58a6ff',ring:false}},
+ {n:'Kiwi Tel',series:'Kiwi',val:15000,g:15,lg:{shape:'pill',glyph:'drop',bg:'#3fb97f',fg:'#ffffff',ring:false}},
+ {n:'Nimbus',series:'Cloud',val:8000,g:8,lg:{shape:'shield',glyph:'wave',bg:'#58a6ff',fg:'#ffffff',ring:true}}
+];
+const EVENTS=[
+ {t:'A tech blogger raves about budget phones',m:1.25},
+ {t:'Holiday sale season! Everyone is shopping',m:1.5},
+ {t:'Global chip shortage slows down stores',m:.7},
+ {t:'A rival recalls 1 million phones, buyers look around',m:1.3},
+ {t:'Economy slows down, customers are saving money',m:.75},
+ {t:'Viral unboxing video brings crowds to stores',m:1.6}
+];
+const MKT=[{n:'No marketing',c:0,h:0},{n:'Social media',c:200,h:.3},{n:'TV ads',c:1000,h:.8},{n:'Mega campaign',c:5000,h:1.5}];
+const FACTORY=[{s:20,c:0},{s:40,c:2000},{s:80,c:8000},{s:160,c:30000}];
+const LABS=[0,3000,15000];
+
+function fresh(){
+  return {v:1,setup:false,name:'My Mobile Co',logo:{shape:'circle',glyph:'letter',bg:'#58a6ff',fg:'#0d1117',ring:true},
+    cash:5000,t:0,fans:0,rev:0,builtTotal:0,soldTotal:0,
+    unlocked:{display:1,chip:1,camera:1,battery:1,body:1,memory:1},feats:{},
+    active:[],labs:1,factory:0,researched:0,
+    design:{t:{display:1,chip:1,camera:1,battery:1,body:1,memory:1},feats:{},color:'#3b6cff',style:1,name:'Starter One'},
+    launch:{units:50,price:0,auto:true,mk:0},
+    phones:[],rivals:RIVALS.map(r=>({n:r.n,series:r.series,lg:r.lg,val:r.val,g:r.g,sold:Math.round(r.g*40),n2:1,next:rnd(30,70)})),
+    ach:{},ev:null,evNext:60,saved:Date.now(),nextId:1,tab:'design'};
+}
+let S=fresh();
+function save(){try{S.saved=Date.now();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.v===1){S=Object.assign(fresh(),o);return true}}}catch(e){}return false}
+function wipe(){try{localStorage.removeItem(KEY)}catch(e){}S=fresh()}
+
+/* ---------- calculations ---------- */
+const day=()=>1+Math.floor(S.t/10);
+const marketTier=()=>Math.min(9,1.5+0.03*day());
+function unitCost(d){
+  let c=0;CATS.forEach(k=>c+=partCost(k,d.t[k.id]));
+  FEATS.forEach(f=>{if(d.feats[f.id])c+=f.cost});return c;
+}
+function spread(d){const a=CATS.map(k=>d.t[k.id]);return Math.max(...a)-Math.min(...a)}
+function score(d){
+  let s=CATS.reduce((a,k)=>a+d.t[k.id],0)/CATS.length;
+  FEATS.forEach(f=>{if(d.feats[f.id])s+=f.bonus});
+  s+=[0,.05,.1,.15][d.style];
+  const sp=spread(d);if(sp>3)s-=(sp-3)*.15;
+  return Math.max(.5,s);
+}
+const fairPrice=d=>55*Math.pow(score(d),1.5);
+const starsOf=d=>Math.round(clamp(.6+(score(d)-1)*.6,.5,5)*10)/10;
+const starText=n=>{const f=Math.round(n);return '★'.repeat(f)+'☆'.repeat(5-f)};
+function reviewText(d){
+  const arr=CATS.map(k=>({k,t:d.t[k.id]})).sort((a,b)=>a.t-b.t);
+  const lo=arr[0],hi=arr[arr.length-1];
+  if(hi.t-lo.t<=1)return 'Well balanced. Every part pulls its weight.';
+  if(hi.t-lo.t>=4)return `The ${hi.k.name.toLowerCase()} is superb, but the ${lo.k.name.toLowerCase()} badly lets it down.`;
+  return `Great ${hi.k.name.toLowerCase()}, though the ${lo.k.name.toLowerCase()} feels dated.`;
+}
+const suggested=d=>Math.max(10,Math.round(fairPrice(d)*.75));
+const maxUnits=()=>{const c=unitCost(S.design);const m=MKT[S.launch.mk].c;return Math.max(0,Math.min(5000,Math.floor((S.cash-m)/c)))};
+const evMult=()=>S.ev?S.ev.m:1;
+function rate(p){
+  const rel=clamp(p.score/(marketTier()+.5),.2,1.6);
+  const r=p.price/p.fair,pf=Math.max(0,1.5-r);
+  const base=3.4/(1+p.fair/1200);
+  return base*rel*rel*pf*pf*1.8*(1+p.hype)*(1+S.fans/400)*Math.max(.2,1-p.age/120)*evMult();
+}
+function valuation(){
+  let n=0;CATS.forEach(k=>n+=S.unlocked[k.id]);n+=Object.keys(S.feats).length*2;
+  return S.cash+S.rev*.6+S.fans*10+n*400;
+}
+function ranking(){
+  const a=S.rivals.map(r=>({me:false,n:r.n,lg:r.lg,val:r.val,sold:r.sold}));
+  a.push({me:true,n:S.name,lg:S.logo,val:valuation(),sold:S.soldTotal});
+  a.sort((x,y)=>y.val-x.val);
+  const tot=a.reduce((s,x)=>s+x.sold,0)||1;
+  a.forEach((x,i)=>{x.rank=i+1;x.share=x.sold/tot*100});
+  return a;
+}
+const myRank=()=>ranking().find(x=>x.me).rank;
+const inStock=()=>S.phones.reduce((s,p)=>s+(p.status==='done'?0:p.left),0);
+
+/* ---------- research ---------- */
+function nextTier(catId){return S.unlocked[catId]+1}
+function resKey(kind,id){return kind+':'+id}
+function isResearching(key){return S.active.some(a=>a.key===key)}
+function startResearch(kind,id){
+  if(S.active.length>=S.labs){toast('All labs are busy');return}
+  let cost,time,key=resKey(kind,id),label;
+  if(kind==='cat'){const t=nextTier(id);if(t>8)return;cost=RC[t-1];time=RT[t-1];label=CATS.find(c=>c.id===id).parts[t-1]}
+  else{const f=FEATS.find(x=>x.id===id);cost=f.rc;time=f.rt;label=f.name}
+  if(isResearching(key))return;
+  if(S.cash<cost){toast('Not enough cash');return}
+  S.cash-=cost;
+  S.active.push({key,kind,id,left:time,total:time,label});
+  toast('Research started');render();
+}
+function finishResearch(a){
+  if(a.kind==='cat'){S.unlocked[a.id]=Math.min(8,S.unlocked[a.id]+1)}else{S.feats[a.id]=true}
+  S.researched++;
+  toast('Research done: '+a.label);sfx(660);if(!QUIET)render();
+}
+function buyUpgrade(kind){
+  if(kind==='lab'){const c=LABS[S.labs];if(c==null||S.cash<c)return;S.cash-=c;S.labs++}
+  else{const n=FACTORY[S.factory+1];if(!n||S.cash<n.c)return;S.cash-=n.c;S.factory++}
+  sfx(520);render();
+}
+
+/* ---------- launching ---------- */
+function startBuild(){
+  const d=S.design,L=S.launch,cost=unitCost(d),mk=MKT[L.mk];
+  const units=Math.min(L.units,maxUnits());
+  if(units<1){toast('Not enough cash to build');return}
+  const total=units*cost+mk.c;
+  if(S.cash<total){toast('Not enough cash');return}
+  S.cash-=total;
+  const price=L.auto?suggested(d):L.price;
+  const secs=Math.max(5,units/FACTORY[S.factory].s);
+  S.phones.unshift({id:S.nextId++,name:d.name||'Untitled',d:JSON.parse(JSON.stringify(d)),score:score(d),fair:fairPrice(d),stars:starsOf(d),
+    price,units,left:units,sold:0,rev:0,cost,spent:total,hype:mk.h,age:0,status:'building',buildLeft:secs,buildTotal:secs,review:reviewText(d)});
+  S.builtTotal+=units;
+  S.design.name=nextName(d.name);
+  toast('Factory started: '+units+' units');render();
+}
+function nextName(n){const m=/^(.*?)(\d+)$/.exec(n||'');if(m)return m[1]+(+m[2]+1);return (n||'Phone')+' 2'}
+
+/* ---------- simulation ---------- */
+function tick(dt,quiet){
+  S.t+=dt;
+  S.active.slice().forEach(a=>{a.left-=dt;if(a.left<=0){S.active.splice(S.active.indexOf(a),1);finishResearch(a)}});
+  S.phones.forEach(p=>{
+    if(p.status==='building'){p.buildLeft-=dt;if(p.buildLeft<=0){p.buildLeft=0;p.status='ready'}}
+    else if(p.status==='selling'){
+      p.age+=dt/10;
+      const u=rate(p)*dt;let n=Math.floor(u);if(Math.random()<u-n)n++;
+      n=Math.min(n,p.left);
+      if(n>0){const r=n*p.price;p.sold+=n;p.left-=n;p.rev+=r;S.cash+=r;S.rev+=r;S.soldTotal+=n;
+        S.fans=Math.max(0,S.fans+n*(p.stars-2.8)*.05)}
+      if(p.left<=0){p.status='done';toast(p.name+' sold out! Revenue '+fmt(p.rev));sfx(780)}
+      else if(p.age>130&&rate(p)<.05){p.status='done'}
+    }
+  });
+  S.rivals.forEach(r=>{
+    r.val+=r.g*(1+day()/80)*dt*rnd(.8,1.2);r.sold+=r.g/8*dt*rnd(.5,1.5);r.next-=dt;
+    if(r.next<=0){r.next=rnd(50,110);r.n2++;if(!QUIET&&Math.random()<.5)news(`${r.n} launches the ${r.series} ${r.n2} phone`)}
+  });
+  if(S.ev){S.ev.left-=dt;if(S.ev.left<=0){S.ev=null;news(null)}}
+  else{S.evNext-=dt;if(S.evNext<=0){const e=pick(EVENTS);S.ev={t:e.t,m:e.m,left:30};S.evNext=rnd(60,110);news(e.t,true)}}
+  checkAch(quiet);
+}
+const ACH=[
+ {id:'first',n:'First launch',d:'Launch your first phone',r:300,f:()=>S.phones.some(p=>p.status==='selling'||p.status==='done')},
+ {id:'s100',n:'Hundred happy buyers',d:'Sell 100 phones',r:500,f:()=>S.soldTotal>=100},
+ {id:'s1k',n:'Thousand club',d:'Sell 1,000 phones',r:3000,f:()=>S.soldTotal>=1000},
+ {id:'s10k',n:'Ten thousand strong',d:'Sell 10,000 phones',r:25000,f:()=>S.soldTotal>=10000},
+ {id:'r5',n:'Lab rat',d:'Finish 5 researches',r:1500,f:()=>S.researched>=5},
+ {id:'r20',n:'Chief scientist',d:'Finish 20 researches',r:20000,f:()=>S.researched>=20},
+ {id:'star',n:'Critics love it',d:'Launch a 4.5 star phone',r:5000,f:()=>S.phones.some(p=>p.stars>=4.5)},
+ {id:'fold',n:'Bend the rules',d:'Research the foldable screen',r:8000,f:()=>S.feats.fold},
+ {id:'top3',n:'Podium',d:'Reach top 3 in the rankings',r:10000,f:()=>myRank()<=3},
+ {id:'no1',n:'Number one',d:'Beat every rival company',r:50000,f:()=>myRank()===1}
+];
+function checkAch(quiet){
+  ACH.forEach(a=>{if(!S.ach[a.id]&&a.f()){S.ach[a.id]=true;S.cash+=a.r;if(!quiet)toast('Achievement: '+a.n+' +'+fmt(a.r));sfx(880)}});
+}
+function news(txt,ev){
+  const el=$('#ticker');if(!el)return;
+  el.innerHTML=txt?`<b>${ev?'EVENT':'NEWS'}</b> ${esc(txt)}${ev?' (demand '+(S.ev.m>1?'up':'down')+')':''}`:'<b>NEWS</b> The market calms down.';
+}
+
+/* ---------- tiny sound ---------- */
+let AC=null;
+function sfx(f){if(QUIET)return;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();
+    o.frequency.value=f;o.type='triangle';g.gain.value=.05;o.connect(g);g.connect(AC.destination);o.start();
+    g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+.25);o.stop(AC.currentTime+.26)}catch(e){}
+}
+let toastT=0;
+function toast(m){if(QUIET)return;const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200)}
+
+/* ---------- update log ---------- */
+const LOG=[
+ {v:'1.0',date:'In development',title:'First release',items:[
+  'Stage that shows your phone front and back, with detailed phone art',
+  'Name your company and design your logo (6 shapes, 9 symbols, 8 colors)',
+  'Design your phone: 6 part categories, 8 tiers each, from bad to good',
+  'You start with one basic part of each kind. Build a simple first phone, then research better parts',
+  'Research tree with 36 part upgrades and 7 special features, with labs that run in real time',
+  'Phone launches: set units, price and marketing, then watch the factory build',
+  'Launch ceremony with countdown, spotlights, confetti and phone reveal',
+  'Sales stats per phone: bought, left to sell, revenue and live sales speed',
+  'Rival company leaderboard with market share',
+  'Market events, achievements with cash rewards, factory and lab upgrades',
+  'Your game saves automatically on this device']}
+];
+const COMING=[
+ 'Phone reviews from tech channels that change your brand fans',
+ 'Hire engineers and designers to research faster',
+ 'Retail stores in cities, plus online sales',
+ 'Rival phones you can compare against yours',
+ 'Seasons with limited-time parts and sales',
+ 'Prestige: sell your company and start again with a bonus'
+];
+/* ---------- UI ---------- */
+let QUIET=false,dcat='display',rcat='display',confirmReset=false,SU=null,lastT=Date.now(),svTick=0;
+const ICONS={
+ design:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+ research:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M8 15h8"/>',
+ sales:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11L21 7H6"/>',
+ rivals:'<path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H4v1a3 3 0 0 0 4 3M16 6h4v1a3 3 0 0 1-4 3M12 13v4M8 21h8M9 17h6"/>',
+ stats:'<path d="M5 20V11M12 20V4M19 20v-6"/>',
+ log:'<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>'
+};
+const TABS=[['design','Phone'],['research','Research'],['sales','Sales'],['rivals','Rivals'],['stats','Stats'],['log','Updates']];
+const svgW=(s,w)=>s.replace('<svg ',`<svg style="width:${w}px;height:auto;flex:none" `);
+
+function renderTabs(){
+  $('#tabs').innerHTML=TABS.map(([id,l])=>`<button class="tab" role="tab" aria-selected="${S.tab===id}" data-act="tab" data-arg="${id}"><svg viewBox="0 0 24 24">${ICONS[id]}</svg>${l}</button>`).join('');
+}
+function setTab(id){
+  S.tab=id;renderTabs();
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+id));
+  render();window.scrollTo(0,0);
+}
+function render(){
+  renderHeader();
+  ({design:renderDesign,research:renderResearch,sales:renderSales,rivals:renderRivals,stats:renderStats,log:renderLog})[S.tab]();
+}
+function renderHeader(){
+  $('#barLogo').innerHTML=logoSVG(S.logo,S.name);
+  $('#barName').textContent=S.name;
+  $('#barDay').textContent='Day '+day()+' • market wants tier '+marketTier().toFixed(1);
+  $('#barCash').textContent=fmt(S.cash);
+  $('#barFans').textContent=num(S.fans)+' fans';
+}
+
+/* ----- phone tab ----- */
+function renderDesign(){
+  const d=S.design,dd={t:d.t,color:d.color,style:d.style};
+  const sc=score(d),st=starsOf(d),sp=spread(d),cat=CATS.find(c=>c.id===dcat);
+  let h=`<div class="card stack"><div class="row"><div class="grow"><div class="label">Phone name</div><input id="phoneName" type="text" maxlength="22" value="${esc(d.name)}" aria-label="Phone name"></div>
+    <button class="btn ghost" data-act="editCompany" style="align-self:flex-end">Logo</button></div></div>
+  <div class="stage"><div class="phones">${phoneSVG(dd,'front',S.logo,S.name,'df')}${phoneSVG(dd,'back',S.logo,S.name,'db')}</div><div class="floor"></div>
+    <div class="statlist"><div class="stars">${starText(st)}</div><div class="small mono">${st.toFixed(1)} / 5 rating</div>
+    <div class="meter"><i style="width:${clamp(sc/9*100,4,100)}%"></i></div>
+    <div class="small"><span class="mute">Build cost</span> <b class="mono">${fmt(unitCost(d))}</b></div>
+    <div class="small"><span class="mute">Fair price</span> <b class="mono">${fmt(fairPrice(d))}</b></div>
+    ${sp>3?'<div class="small" style="color:var(--warn);flex-basis:100%">Unbalanced parts lower the rating</div>':''}</div></div>
+  <div class="chips" role="group" aria-label="Part category">${CATS.map(c=>`<button class="chip" aria-pressed="${c.id===dcat}" data-act="dcat" data-arg="${c.id}">${c.name} ${d.t[c.id]}</button>`).join('')}</div>
+  <div class="stack">${cat.parts.map((nm,i)=>{const t=i+1,lock=t>S.unlocked[cat.id];
+    return `<button class="part ${lock?'lock':''}" aria-pressed="${d.t[cat.id]===t}" data-act="part" data-arg="${cat.id}:${t}" ${lock?'disabled':''}><span class="t">${t}</span><span class="nm">${esc(nm)}</span><span class="pr mono">${lock?'Research it':'$'+partCost(cat,t)}</span></button>`}).join('')}</div>
+  <div class="card stack"><h3>Features</h3>${FEATS.map(f=>{const un=S.feats[f.id],on=d.feats[f.id];
+    return `<button class="part ${un?'':'lock'}" aria-pressed="${!!on}" data-act="feat" data-arg="${f.id}" ${un?'':'disabled'}><span class="t">${on?'✓':'+'}</span><span class="nm">${f.name}</span><span class="pr mono">${un?'$'+f.cost+' • +'+f.bonus.toFixed(2):'Research it'}</span></button>`}).join('')}</div>
+  <div class="card stack"><h3>Look</h3><div class="label">Body color</div><div class="swatches">${BODYCOL.map(c=>`<button class="sw" style="background:${c}" aria-pressed="${d.color===c}" aria-label="Color ${c}" data-act="color" data-arg="${c}"></button>`).join('')}</div>
+    <div class="label">Screen style</div><div class="chips">${STYLES.map((s,i)=>`<button class="chip" aria-pressed="${d.style===i}" data-act="style" data-arg="${i}">${s}</button>`).join('')}</div></div>`;
+  $('#p-design').innerHTML=h;
+}
+
+/* ----- research tab ----- */
+function chainHTML(cat){
+  let h='<div class="chain">';
+  for(let t=1;t<=8;t++){
+    const done=t<=S.unlocked[cat.id],key=resKey('cat',cat.id),going=!done&&t===S.unlocked[cat.id]+1&&isResearching(key),
+      avail=!done&&!going&&t===S.unlocked[cat.id]+1,cls=done?'done':going?'going':avail?'avail':'far';
+    const a=S.active.find(x=>x.key===key),cost=RC[t-1];
+    h+=`<div class="node ${cls}"><div class="rail"><div class="b">${done?'✓':t}</div>${t<8?'<div class="l"></div>':''}</div>
+      <div class="body"><div class="box"><b>${esc(cat.parts[t-1])}</b><div class="small mute">${t<=1?'Basic part • ':''}$${partCost(cat,t)} per phone</div>
+      ${avail?`<div class="row" style="margin-top:8px"><button class="btn" data-act="research" data-arg="cat:${cat.id}" ${S.cash<cost||S.active.length>=S.labs?'disabled':''}>Research ${fmt(cost)}</button><span class="small mute">${RT[t-1]}s</span></div>`:''}
+      ${going&&a?`<div class="prog" data-rk="${key}"><i style="width:${100*(1-a.left/a.total)}%"></i></div><div class="small mono mute" data-rt="${key}">${Math.ceil(a.left)}s left</div>`:''}
+      </div></div></div>`;
+  }
+  return h+'</div>';
+}
+function renderResearch(){
+  const labC=LABS[S.labs],fN=FACTORY[S.factory+1];
+  let slots='';
+  for(let i=0;i<S.labs;i++){const a=S.active[i];
+    slots+=a?`<div><div class="row"><b class="grow">${esc(a.label)}</b><span class="small mono mute" data-rt="${a.key}">${Math.ceil(a.left)}s</span></div><div class="prog" data-rk="${a.key}"><i style="width:${100*(1-a.left/a.total)}%"></i></div></div>`
+      :`<div class="small mute">Lab ${i+1} is idle. Pick something to research below.</div>`;}
+  let h=`<div class="card stack"><h3>Research labs</h3>${slots}</div>
+  <div class="card stack"><div class="row"><div class="grow"><b>Labs: ${S.labs} of 3</b><div class="small mute">More labs research several parts at once</div></div>${labC!=null?`<button class="btn" data-act="upgrade" data-arg="lab" ${S.cash<labC?'disabled':''}>${fmt(labC)}</button>`:'<span class="tag live">Max</span>'}</div>
+  <div class="row"><div class="grow"><b>Factory: ${FACTORY[S.factory].s} phones/sec</b><div class="small mute">A faster factory builds batches sooner</div></div>${fN?`<button class="btn" data-act="upgrade" data-arg="factory" ${S.cash<fN.c?'disabled':''}>${fmt(fN.c)}</button>`:'<span class="tag live">Max</span>'}</div></div>
+  <div class="chips">${CATS.map(c=>`<button class="chip" aria-pressed="${rcat===c.id}" data-act="rcat" data-arg="${c.id}">${c.name} ${S.unlocked[c.id]}/8</button>`).join('')}<button class="chip" aria-pressed="${rcat==='feat'}" data-act="rcat" data-arg="feat">Features ${Object.keys(S.feats).length}/${FEATS.length}</button></div>`;
+  if(rcat==='feat'){
+    h+='<div class="stack">'+FEATS.map(f=>{const key=resKey('feat',f.id),un=S.feats[f.id],going=isResearching(key),a=S.active.find(x=>x.key===key);
+      return `<div class="box card"><b>${f.name}</b><div class="small mute">Rating +${f.bonus.toFixed(2)} • $${f.cost} per phone</div>
+      ${un?'<span class="tag live" style="margin-top:8px">Unlocked</span>':going&&a?`<div class="prog" data-rk="${key}"><i style="width:${100*(1-a.left/a.total)}%"></i></div><div class="small mono mute" data-rt="${key}">${Math.ceil(a.left)}s left</div>`
+      :`<div class="row" style="margin-top:8px"><button class="btn" data-act="research" data-arg="feat:${f.id}" ${S.cash<f.rc||S.active.length>=S.labs?'disabled':''}>Research ${fmt(f.rc)}</button><span class="small mute">${f.rt}s</span></div>`}</div>`}).join('')+'</div>';
+  }else h+=chainHTML(CATS.find(c=>c.id===rcat));
+  $('#p-research').innerHTML=h;
+}
+function updateResearchLive(){
+  document.querySelectorAll('[data-rk]').forEach(el=>{const a=S.active.find(x=>x.key===el.dataset.rk);if(a)el.firstElementChild.style.width=(100*(1-a.left/a.total))+'%'});
+  document.querySelectorAll('[data-rt]').forEach(el=>{const a=S.active.find(x=>x.key===el.dataset.rt);if(a)el.textContent=Math.ceil(a.left)+'s'+(el.classList.contains('mono')&&el.textContent.includes('left')?' left':'')});
+}
+
+/* ----- sales tab ----- */
+function renderSales(){
+  $('#p-sales').innerHTML='<div id="launchpad"></div><div id="phonelist" class="stack"></div>';
+  renderLaunchpad();renderPhoneList();
+}
+function renderLaunchpad(){
+  const d=S.design,L=S.launch,mu=maxUnits(),fair=fairPrice(d),sug=suggested(d);
+  if(L.auto)L.price=sug;
+  const pmin=Math.max(5,Math.round(fair*.3)),pmax=Math.max(pmin+1,Math.round(fair*1.5));
+  L.price=clamp(L.price,pmin,pmax);L.units=clamp(L.units,1,Math.max(1,mu));
+  $('#launchpad').innerHTML=`<div class="card stack"><div class="row"><div class="grow"><h3>Launch pad</h3><div class="small mute">${esc(d.name)} • ${starsOf(d).toFixed(1)} stars • costs ${fmt(unitCost(d))} each</div></div></div>
+   <div><div class="row"><span class="grow">Phones to build</span><b class="mono" id="uL">${num(L.units)}</b></div><input type="range" id="units" min="1" max="${Math.max(1,mu)}" value="${L.units}" aria-label="Phones to build"></div>
+   <div><div class="row"><span class="grow">Selling price</span><b class="mono" id="pL">${fmt(L.price)}</b></div><input type="range" id="price" min="${pmin}" max="${pmax}" value="${L.price}" aria-label="Selling price">
+    <button class="chip" id="autoBtn" aria-pressed="${L.auto}" data-act="auto" style="margin-top:6px">Use suggested price</button></div>
+   <div><div class="label" style="margin-bottom:6px">Marketing</div><div class="chips">${MKT.map((m,i)=>`<button class="chip" aria-pressed="${L.mk===i}" data-act="mk" data-arg="${i}">${m.n}${m.c?' '+fmt(m.c):''}</button>`).join('')}</div></div>
+   <div id="lsum"></div><button class="btn big" id="buildBtn" data-act="build">Build and launch</button></div>`;
+  launchSummary();
+}
+function launchSummary(){
+  const d=S.design,L=S.launch,c=unitCost(d),mk=MKT[L.mk],fair=fairPrice(d),price=L.auto?suggested(d):L.price,mu=maxUnits();
+  const cost=L.units*c+mk.c,r=price/fair;
+  const hint=score(d)<marketTier()-.5?'Buyers already expect better parts than this. Research upgrades to sell more.':
+    r<.6?'Bargain price. Sells fast, but you earn less per phone.':r<.95?'Good deal. This price should sell well.':r<1.2?'A bit pricey. Sales will be slower.':'Overpriced. Very few people will buy.';
+  const el=$('#lsum');if(!el)return;
+  el.innerHTML=`<div class="kv"><div><span class="label">Build cost</span><b class="mono">${fmt(cost)}</b></div><div><span class="label">If all sold</span><b class="mono">${fmt(L.units*price)}</b></div>
+   <div><span class="label">Profit per phone</span><b class="mono" style="color:${price>=c?'var(--good)':'var(--bad)'}">${fmt(price-c)}</b></div><div><span class="label">Build time</span><b class="mono">${Math.round(Math.max(5,L.units/FACTORY[S.factory].s))}s</b></div></div>
+   <div class="small mute" style="margin-top:8px">${hint} Fair price is ${fmt(fair)}.</div>`;
+  const b=$('#buildBtn');if(b)b.disabled=mu<1||S.cash<cost;
+}
+function updateLaunchLive(){
+  const u=$('#units');if(!u)return;
+  const mu=maxUnits();u.max=Math.max(1,mu);
+  if(+u.value>mu){u.value=Math.max(1,mu);S.launch.units=+u.value;$('#uL').textContent=num(S.launch.units)}
+  launchSummary();
+}
+function phoneCard(p){
+  const pct=p.units?100*p.sold/p.units:0,per=rate(p);
+  let body='';
+  if(p.status==='building')body=`<div class="sold"><i style="width:${100*(1-p.buildLeft/p.buildTotal)}%;background:var(--accent)"></i></div><div class="small mono mute">Factory building ${num(p.units)} phones, ${Math.ceil(p.buildLeft)}s left</div>`;
+  else if(p.status==='ready')body='<div class="small">Ready for the launch event.</div>';
+  else body=`<div class="sold"><i style="width:${pct}%"></i></div>
+    <div class="nums"><div><span class="label">Bought</span><b class="mono">${num(p.sold)}</b></div><div><span class="label">Left to sell</span><b class="mono">${num(p.left)}</b></div><div><span class="label">Revenue</span><b class="mono">${fmt(p.rev)}</b></div></div>
+    <div class="small mute mono">${p.status==='selling'?`Selling ${per.toFixed(1)} per second • `:''}Profit so far ${fmt(p.rev-p.spent)}</div>`;
+  const tag=p.status==='selling'?'<span class="tag live">On sale</span>':p.status==='done'?'<span class="tag end">Finished</span>':'<span class="tag">'+(p.status==='ready'?'Ready':'Building')+'</span>';
+  return `<div class="card phonecard"><div class="row">${svgW(phoneSVG(p.d,'front',S.logo,S.name,'p'+p.id),30)}<div class="grow"><b>${esc(p.name)}</b><div class="small"><span class="stars" style="font-size:13px">${starText(p.stars)}</span> <span class="mute">${fmt(p.price)} each</span></div></div>${tag}</div>
+   ${body}<div class="small mute">${esc(p.review)}</div></div>`;
+}
+function renderPhoneList(){
+  const el=$('#phonelist');if(!el)return;
+  el.innerHTML=S.phones.length?'<h3>Your phones</h3>'+S.phones.map(phoneCard).join(''):'<div class="card mute">Nothing launched yet. Pick your parts in the Phone tab, then build your first batch above.</div>';
+}
+
+/* ----- rivals, stats, updates ----- */
+function renderRivals(){
+  const rk=ranking();
+  $('#p-rivals').innerHTML=`<div class="card"><h2>Rival companies</h2><div class="small mute" style="margin-top:4px">Company value is your cash, 60% of lifetime revenue, fans and research. Share is the phones sold compared with everyone else.</div></div>
+  <div class="card lb">${rk.map(x=>`<div class="lbrow ${x.me?'me':''}"><div class="rank">${x.rank}</div>${logoSVG(x.lg,x.n)}<div class="grow"><b>${esc(x.n)}${x.me?' (you)':''}</b><div class="small mute">${num(x.sold)} sold • ${x.share.toFixed(1)}% share</div></div><b class="mono">${fmt(x.val)}</b></div>`).join('')}</div>
+  <div class="card"><div class="label">Market right now</div><p style="margin:6px 0 0">Buyers expect about tier ${marketTier().toFixed(1)} parts today. That number rises every day, so keep researching.</p>${S.ev?`<p style="margin:8px 0 0"><b>${esc(S.ev.t)}</b> <span class="mute mono">(${Math.ceil(S.ev.left)}s)</span></p>`:''}</div>`;
+}
+function renderStats(){
+  const best=S.phones.reduce((m,p)=>Math.max(m,p.stars),0),rk=ranking(),me=rk.find(x=>x.me);
+  $('#p-stats').innerHTML=`<div class="kv">
+   <div><span class="label">Day</span><b class="mono">${day()}</b></div><div><span class="label">Rank</span><b class="mono">#${me.rank} of ${rk.length}</b></div>
+   <div><span class="label">Company value</span><b class="mono">${fmt(valuation())}</b></div><div><span class="label">Fans</span><b class="mono">${num(S.fans)}</b></div>
+   <div><span class="label">Phones built</span><b class="mono">${num(S.builtTotal)}</b></div><div><span class="label">Phones bought</span><b class="mono">${num(S.soldTotal)}</b></div>
+   <div><span class="label">Left to sell</span><b class="mono">${num(inStock())}</b></div><div><span class="label">Revenue</span><b class="mono">${fmt(S.rev)}</b></div>
+   <div><span class="label">Best rating</span><b class="mono">${best?best.toFixed(1)+' / 5':'None yet'}</b></div><div><span class="label">Researches done</span><b class="mono">${S.researched}</b></div></div>
+  <div class="card stack"><h3>Achievements</h3>${ACH.map(a=>`<div class="ach ${S.ach[a.id]?'got':''}"><div class="ic">${S.ach[a.id]?'★':'☆'}</div><div class="grow"><b>${a.n}</b><div class="small mute">${a.d}</div></div><span class="small mono">${fmt(a.r)}</span></div>`).join('')}</div>
+  <div class="card stack">${confirmReset?`<b>Erase everything and start over?</b><div class="row"><button class="btn" style="background:var(--bad)" data-act="resetYes">Yes, erase</button><button class="btn ghost" data-act="resetNo">Cancel</button></div>`:`<button class="btn ghost" data-act="reset">Reset game</button>`}</div>`;
+}
+function renderLog(){
+  $('#p-log').innerHTML=LOG.map(l=>`<div class="card ver"><div class="row"><span class="badge">v${l.v}</span><h3>${esc(l.title)}</h3></div><div class="small mute">${l.date}</div><ul>${l.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')+
+  `<div class="card ver"><h3>Coming soon</h3><ul>${COMING.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`;
+}
+
+/* ----- company setup ----- */
+function openSetup(first){
+  SU={name:first?'':S.name,logo:Object.assign({},S.logo),first};
+  $('#setup').hidden=false;renderSetup();
+}
+function renderSetup(){
+  const lg=SU.logo,sw=(k,cur)=>LOGOCOL.map(c=>`<button class="sw" style="background:${c}" aria-pressed="${cur===c}" aria-label="Color ${c}" data-act="su" data-arg="${k}:${c}"></button>`).join('');
+  const nm=SU.name||'M';
+  $('#setup').innerHTML=`<div class="setup"><div><h2>${SU.first?'Build your mobile company':'Edit your company'}</h2><p class="mute" style="margin:6px 0 0">Choose a name and design your logo. You can change both later.</p></div>
+   <div class="card logoview" id="sprev">${logoSVG(lg,nm)}</div>
+   <div><div class="label" style="margin-bottom:6px">Company name</div><input id="cname" type="text" maxlength="22" placeholder="For example Nova Mobile" value="${esc(SU.name)}" aria-label="Company name"></div>
+   <div class="card stack"><div class="label">Shape</div><div class="shapes">${Object.keys(SHAPES).map(k=>`<button class="pick" aria-pressed="${lg.shape===k}" data-act="su" data-arg="shape:${k}" aria-label="${k}">${logoSVG({shape:k,glyph:'letter',bg:lg.bg,fg:lg.bg,ring:false},' ')}</button>`).join('')}</div>
+    <div class="label">Symbol</div><div class="shapes">${Object.keys(GLYPHS).map(k=>`<button class="pick" aria-pressed="${lg.glyph===k}" data-act="su" data-arg="glyph:${k}" aria-label="${k}">${logoSVG({shape:lg.shape,glyph:k,bg:lg.bg,fg:lg.fg,ring:false},nm)}</button>`).join('')}</div>
+    <div class="label">Background</div><div class="swatches">${sw('bg',lg.bg)}</div>
+    <div class="label">Symbol color</div><div class="swatches">${sw('fg',lg.fg)}</div>
+    <button class="chip" aria-pressed="${!!lg.ring}" data-act="su" data-arg="ring:x" style="align-self:flex-start">Inner ring</button></div>
+   <button class="btn big" data-act="finishSetup">${SU.first?'Open for business':'Save company'}</button></div>`;
+}
+function finishSetup(){
+  S.name=(SU.name||'').trim()||'My Mobile Co';S.logo=Object.assign({},SU.logo);
+  const first=!S.setup;S.setup=true;$('#setup').hidden=true;
+  lastT=Date.now();render();save();
+  toast(first?'Welcome, '+S.name+'. Build your first phone!':'Company saved');
+}
+
+/* ----- launch ceremony ----- */
+let showTimers=[],confettiRAF=0,showId=0;
+function confetti(){
+  const cv=$('#cv');if(!cv)return;
+  const dpr=window.devicePixelRatio||1,w=cv.width=innerWidth*dpr,h=cv.height=innerHeight*dpr,ctx=cv.getContext('2d');
+  const cols=['#58a6ff','#ffc857','#f472b6','#3fb97f','#a78bfa','#ffffff'],ps=[];
+  const burst=(x,y)=>{for(let i=0;i<80;i++){const a=rnd(0,Math.PI*2),s=rnd(2,9)*dpr;ps.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-4*dpr,c:pick(cols),r:rnd(4,8)*dpr,l:rnd(70,130)})}};
+  burst(w*.25,h*.4);burst(w*.75,h*.4);showTimers.push(setTimeout(()=>burst(w*.5,h*.3),500),setTimeout(()=>burst(w*.3,h*.25),1300),setTimeout(()=>burst(w*.7,h*.25),1700));
+  (function loop(){
+    ctx.clearRect(0,0,w,h);
+    for(let i=ps.length-1;i>=0;i--){const p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.18*dpr;p.vx*=.99;p.l--;
+      if(p.l<=0){ps.splice(i,1);continue}ctx.globalAlpha=Math.min(1,p.l/40);ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,p.r,p.r*.6)}
+    confettiRAF=requestAnimationFrame(loop);
+  })();
+}
+function showCeremony(p){
+  showId=p.id;const el=$('#show'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,step=reduce?350:1000;
+  el.hidden=false;
+  el.innerHTML='<canvas id="cv"></canvas><div class="beam"></div><div id="cd"></div><button class="btn ghost" id="skipBtn" data-act="skipShow" style="position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px))">Skip</button>';
+  let n=3;
+  (function count(){
+    if(n>0){$('#cd').innerHTML=`<div class="count">${n}</div>`;sfx(300+(3-n)*140);n--;showTimers.push(setTimeout(count,step))}
+    else revealNow();
+  })();
+}
+function revealNow(){
+  const p=S.phones.find(x=>x.id===showId);if(!p||!$('#cd'))return;
+  showTimers.forEach(clearTimeout);showTimers=[];
+  const sk=$('#skipBtn');if(sk)sk.remove();
+  $('#cd').innerHTML=`<div class="reveal"><div class="launchword">NOW SELLING</div>${svgW(phoneSVG(p.d,'front',S.logo,S.name,'sh'),170).replace('<svg ','<svg class="ph" ')}
+   <h1>${esc(p.name)}</h1><div class="stars">${starText(p.stars)}</div><div class="by">${svgW(logoSVG(S.logo,S.name),26)}<span>by ${esc(S.name)} • ${fmt(p.price)}</span></div>
+   <div class="small mute" style="max-width:280px">${esc(p.review)}</div>
+   <button class="btn big showbtn" data-act="closeShow" data-arg="${p.id}" style="margin-top:8px">Start selling ${num(p.units)} phones</button></div>`;
+  sfx(523);setTimeout(()=>sfx(659),150);setTimeout(()=>sfx(784),300);confetti();
+}
+function closeShow(id){
+  showTimers.forEach(clearTimeout);showTimers=[];cancelAnimationFrame(confettiRAF);
+  const p=S.phones.find(x=>x.id===id);if(p&&p.status==='ready')p.status='selling';
+  $('#show').hidden=true;$('#show').innerHTML='';render();save();
+}
+function maybeShow(){
+  if(!S.setup||!$('#show').hidden)return;
+  const p=S.phones.find(x=>x.status==='ready');if(p)showCeremony(p);
+}
+
+/* ----- events ----- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  const a=b.dataset.act,g=b.dataset.arg;
+  switch(a){
+    case 'tab':setTab(g);break;
+    case 'dcat':dcat=g;renderDesign();break;
+    case 'part':{const [c,t]=g.split(':');S.design.t[c]=+t;renderDesign();sfx(440);break}
+    case 'feat':if(S.design.feats[g])delete S.design.feats[g];else S.design.feats[g]=true;renderDesign();break;
+    case 'color':S.design.color=g;renderDesign();break;
+    case 'style':S.design.style=+g;renderDesign();break;
+    case 'editCompany':openSetup(false);break;
+    case 'rcat':rcat=g;renderResearch();break;
+    case 'research':{const [k,id]=g.split(':');startResearch(k,id);break}
+    case 'upgrade':buyUpgrade(g);break;
+    case 'mk':S.launch.mk=+g;renderLaunchpad();break;
+    case 'auto':S.launch.auto=true;renderLaunchpad();break;
+    case 'build':startBuild();break;
+    case 'skipShow':revealNow();break;
+    case 'closeShow':closeShow(+g);break;
+    case 'su':{const [k,v]=g.split(':');if(k==='ring')SU.logo.ring=!SU.logo.ring;else SU.logo[k]=v;renderSetup();break}
+    case 'finishSetup':finishSetup();break;
+    case 'reset':confirmReset=true;renderStats();break;
+    case 'resetNo':confirmReset=false;renderStats();break;
+    case 'resetYes':confirmReset=false;wipe();S.tab='design';renderTabs();document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-design'));render();openSetup(true);break;
+  }
+});
+document.addEventListener('input',e=>{
+  const id=e.target.id;
+  if(id==='cname'){SU.name=e.target.value;$('#sprev').innerHTML=logoSVG(SU.logo,SU.name||'M')}
+  else if(id==='phoneName'){S.design.name=e.target.value}
+  else if(id==='units'){S.launch.units=+e.target.value;$('#uL').textContent=num(S.launch.units);launchSummary()}
+  else if(id==='price'){S.launch.auto=false;S.launch.price=+e.target.value;$('#pL').textContent=fmt(S.launch.price);const ab=$('#autoBtn');if(ab)ab.setAttribute('aria-pressed','false');launchSummary()}
+});
+
+/* ----- loop ----- */
+function refreshLive(){
+  renderHeader();
+  const t=S.tab;
+  if(t==='research')updateResearchLive();
+  else if(t==='sales'){updateLaunchLive();renderPhoneList()}
+  else if(t==='rivals'&&S.t%2===0)renderRivals();
+  else if(t==='stats'&&S.t%2===0)renderStats();
+  maybeShow();
+}
+function loop(){
+  if(!S.setup)return;
+  const now=Date.now(),el=(now-lastT)/1000;lastT=now;
+  if(el>3){QUIET=true;for(let i=0;i<Math.min(900,Math.floor(el));i++)tick(1);QUIET=false}else tick(1);
+  refreshLive();
+  if(++svTick%5===0)save();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+function init(){
+  let gain=0;
+  const had=load();
+  if(had&&S.setup){
+    const away=clamp((Date.now()-S.saved)/1000,0,900),c0=S.cash;
+    if(away>5){QUIET=true;for(let i=0;i<Math.floor(away);i++)tick(1);QUIET=false}
+    gain=S.cash-c0;
+  }
+  lastT=Date.now();
+  renderTabs();
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+S.tab));
+  render();
+  if(!S.setup)openSetup(true);else $('#setup').hidden=true;
+  if(gain>1)toast('While you were away you earned '+fmt(gain));
+  setInterval(loop,1000);
+}
+init();
+</script>
+
+<script>
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+}
+</script>
+</html>
